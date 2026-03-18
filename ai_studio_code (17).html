@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UP Police Divan ji 2.0 - Test System</title>
+    <style>
+        :root {
+            --primary-color: #1a237e;
+            --secondary-color: #f5f5f5;
+            --accent-color: #ffd700;
+            --success-color: #2e7d32;
+            --error-color: #c62828;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e0e0e0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-color);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .hidden { display: none !important; }
+
+        h1, h2 { color: var(--primary-color); }
+
+        /* Inputs and Buttons */
+        input[type="text"] {
+            width: 80%;
+            padding: 12px;
+            margin: 20px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: transform 0.2s, background 0.2s;
+            display: inline-block;
+            width: 80%;
+        }
+
+        .btn:hover { background-color: #0d1440; transform: translateY(-2px); }
+
+        /* Quiz Styles */
+        .option {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.3s;
+            background: #fff;
+        }
+
+        .option:hover { background-color: #f0f0f0; }
+        .correct { background-color: #c8e6c9 !important; border-color: var(--success-color) !important; }
+        .incorrect { background-color: #ffcdd2 !important; border-color: var(--error-color) !important; }
+
+        #explanation {
+            margin-top: 15px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-left: 5px solid #2196f3;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            height: 100%;
+            background: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .empty-msg { color: #666; font-style: italic; margin: 20px; }
+
+        /* Result Styles */
+        .result-card { padding: 20px; border: 2px solid var(--primary-color); border-radius: 10px; }
+        .score { font-size: 24px; font-weight: bold; color: var(--primary-color); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Screen 1: Name Input -->
+        <div id="screen-name">
+            <h1>Welcome</h1>
+            <p>Please enter your name to start the test</p>
+            <input type="text" id="username" placeholder="Enter Your Name">
+            <button class="btn" onclick="startApp()">Start</button>
+        </div>
+
+        <!-- Screen 2: Course Selection -->
+        <div id="screen-course" class="hidden">
+            <h2>Select Course</h2>
+            <button class="btn" onclick="showSubject()">UP Police Divan ji 2.0</button>
+        </div>
+
+        <!-- Screen 3: Subject Selection -->
+        <div id="screen-subject" class="hidden">
+            <h2 id="display-course-name">UP Police Divan ji 2.0</h2>
+            <p>Select Subject:</p>
+            <button class="btn" onclick="showLectures()">UP GK</button>
+            <button class="btn" style="background:#888" onclick="showScreen('screen-course')">Back</button>
+        </div>
+
+        <!-- Screen 4: Lecture Selection -->
+        <div id="screen-lectures" class="hidden">
+            <h2>UP GK - Lectures</h2>
+            <button class="btn" onclick="startQuiz(1)">Lecture 1</button>
+            <button class="btn" onclick="startQuiz(2)">Lecture 2</button>
+            <button class="btn" onclick="startQuiz(3)">Lecture 3</button>
+            <button class="btn" onclick="startQuiz(4)">Lecture 4</button>
+            <button class="btn" onclick="startQuiz(5)">Lecture 5</button>
+            <button class="btn" style="background:#888" onclick="showScreen('screen-subject')">Back</button>
+        </div>
+
+        <!-- Screen 5: Empty Lecture Message -->
+        <div id="screen-empty" class="hidden">
+            <h2>Lecture Empty</h2>
+            <p class="empty-msg">No questions available in this lecture.</p>
+            <button class="btn" onclick="showScreen('screen-lectures')">Go Back</button>
+        </div>
+
+        <!-- Screen 6: Quiz Interface -->
+        <div id="screen-quiz" class="hidden">
+            <div class="progress-bar"><div id="progress-fill"></div></div>
+            <div id="question-container">
+                <h3 id="question-text">Question text goes here?</h3>
+                <div id="options-container">
+                    <!-- Options injected here -->
+                </div>
+                <div id="explanation" class="hidden"></div>
+                <button id="next-btn" class="btn hidden" onclick="nextQuestion()">Next</button>
+            </div>
+        </div>
+
+        <!-- Screen 7: Results -->
+        <div id="screen-result" class="hidden">
+            <h2>Test Completed!</h2>
+            <div class="result-card">
+                <p>Candidate: <strong id="res-name"></strong></p>
+                <p>Total Questions: <span id="res-total"></span></p>
+                <p>Correct Answers: <span id="res-correct" style="color:green"></span></p>
+                <p class="score">Final Score: <span id="res-score"></span>%</p>
+            </div>
+            <button class="btn" onclick="location.reload()">Restart Test</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const mcqs = [
+            {
+                q: "प्राचीन वैदिक काल में उत्तर प्रदेश को किस नाम से जाना जाता था?",
+                options: ["मध्य देश", "ब्रहार्षिदेश", "आर्यावर्त", "संयुक्त प्रांत"],
+                ans: 1, // Index of "ब्रहार्षिदेश"
+                exp: "प्राचीन वैदिक साहित्य में उत्तर प्रदेश के क्षेत्र को 'ब्रहार्षिदेश' के नाम से संबोधित किया गया है।"
+            },
+            {
+                q: "रामायण और महाभारत काल के आसपास इस क्षेत्र को 'मध्य देश' क्यों कहा जाता था?",
+                options: ["क्योंकि यह भारत के केंद्र में स्थित था", "क्योंकि यह क्षेत्र आर्यों का मुख्य निवास स्थान था", "क्योंकि यह व्यापार का मुख्य केंद्र था", "क्योंकि यहाँ से गंगा नदी बहती थी"],
+                ans: 1,
+                exp: "रामायण और महाभारत काल में यह आर्य संस्कृति का केंद्र होने के कारण 'मध्य देश' कहलाता था।"
+            },
+            {
+                q: "दिल्ली सल्तनत काल (1206-1526) के दौरान इस क्षेत्र के प्रशासनिक प्रांतों को क्या कहा जाता था?",
+                options: ["सूबा", "इक्ता (Ikta)", "तहसील", "परगना"],
+                ans: 1,
+                exp: "सल्तनत काल में प्रशासनिक इकाइयों को 'इक्ता' कहा जाता था, जिसके प्रमुख को इक्तादार कहते थे।"
+            },
+            {
+                q: "सल्तनत काल में उत्तर प्रदेश का कौन सा इक्ता सबसे महत्वपूर्ण और समृद्ध माना जाता था?",
+                options: ["कन्नौज", "अवध", "बदायूँ", "आगरा"],
+                ans: 2,
+                exp: "बदायूँ उस समय का सबसे शक्तिशाली और महत्वपूर्ण इक्ता था, इल्तुतमिश सुल्तान बनने से पहले यहाँ का गवर्नर था।"
+            },
+            {
+                q: "मुगल काल (1526-18वीं शताब्दी) में उत्तर प्रदेश को मुख्य रूप से कितने बड़े सूबों में विभाजित किया गया था?",
+                options: ["दो", "तीन", "चार", "पाँच"],
+                ans: 1,
+                exp: "मुगल काल में उत्तर प्रदेश का क्षेत्र मुख्य रूप से आगरा, अवध और इलाहाबाद नामक तीन सूबों में बँटा था।"
+            },
+            {
+                q: "मुगल काल में पूर्वी उत्तर प्रदेश का क्षेत्र किस सूबे के अंतर्गत आता था?",
+                options: ["आगरा", "अवध", "प्रयागराज", "रुहेलखण्ड"],
+                ans: 2,
+                exp: "मुगल प्रशासन में पूर्वी उत्तर प्रदेश का हिस्सा 'प्रयागराज' (इलाहाबाद) सूबे के अधीन था।"
+            },
+            {
+                q: "18वीं शताब्दी में नवाबों के अधीन स्वतंत्र राज्य 'अवध' की प्रथम राजधानी क्या थी?",
+                options: ["लखनऊ", "अयोध्या", "फैजाबाद", "आगरा"],
+                ans: 1,
+                exp: "अवध के स्वतंत्र राज्य की पहली राजधानी अयोध्या थी, जिसे बाद में फैजाबाद और फिर लखनऊ ले जाया गया।"
+            },
+            {
+                q: "आगरा प्रेसीडेंसी की स्थापना किस तिथि को की गई थी?",
+                options: ["01 जून 1836", "14 नवम्बर 1834", "01 जनवरी 1833", "24 जनवरी 1950"],
+                ans: 1,
+                exp: "14 नवंबर 1834 को आगरा प्रेसीडेंसी का गठन किया गया था।"
+            },
+            {
+                q: "आगरा प्रेसीडेंसी के प्रथम गवर्नर के रूप में किसे नियुक्त किया गया था?",
+                options: ["हॉल्ट मैकेंजी", "सर जेम्स थॉमसन", "चार्ल्स मेटकाफ", "लॉर्ड कैनिंग"],
+                ans: 2,
+                exp: "सर चार्ल्स मेटकाफ को नवनिर्मित आगरा प्रेसीडेंसी का पहला गवर्नर बनाया गया था।"
+            },
+            {
+                q: "उत्तर-पश्चिमी प्रांत में भू-राजस्व के लिए 'महलवाड़ी प्रणाली' (Mahalwari System) कब लागू की गई थी?",
+                options: ["1833", "1836", "1877", "1902"],
+                ans: 1,
+                exp: "उत्तर-पश्चिमी प्रांत में राजस्व सुधारों के तहत 1836 में महलवाड़ी व्यवस्था लागू हुई।"
+            },
+            {
+                q: "महलवाड़ी प्रणाली का जनक (Father of Mahalwari system) किसे माना जाता है?",
+                options: ["लॉर्ड डलहौजी", "हॉल्ट मैकेंजी", "चार्ल्स मेटकाफ", "थॉमस मुनरो"],
+                ans: 1,
+                exp: "हॉल्ट मैकेंजी को महलवाड़ी प्रणाली का प्रणेता माना जाता है।"
+            },
+            {
+                q: "किस वर्ष उत्तर-पश्चिमी प्रांत का मुख्यालय आगरा से इलाहाबाद (प्रयागराज) स्थानांतरित किया गया?",
+                options: ["1836", "1858", "1877", "1921"],
+                ans: 1,
+                exp: "1857 की क्रांति के बाद, 1858 में राजधानी को आगरा से इलाहाबाद बदला गया।"
+            },
+            {
+                q: "किस वर्ष उत्तर-पश्चिमी प्रांत का नाम बदलकर 'उत्तर-पश्चिमी प्रांत एवं अवध' किया गया?",
+                options: ["1858", "1877", "1902", "1937"],
+                ans: 1,
+                exp: "वर्ष 1877 में उत्तर-पश्चिमी प्रांत और अवध के क्षेत्रों को प्रशासनिक रूप से जोड़ा गया।"
+            },
+            {
+                q: "किस वर्ष इस क्षेत्र का नाम 'आगरा एवं अवध का संयुक्त प्रांत' (United Province of Agra and Oudh) कर दिया गया?",
+                options: ["1877", "1902", "1921", "1937"],
+                ans: 1,
+                exp: "1902 में नाम को और अधिक स्पष्ट करते हुए आगरा एवं अवध का संयुक्त प्रांत किया गया।"
+            },
+            {
+                q: "किस वर्ष राज्य का नाम संक्षिप्त करके केवल 'संयुक्त प्रांत' (United Province) कर दिया गया?",
+                options: ["1902", "1921", "1937", "1950"],
+                ans: 2,
+                exp: "वर्ष 1937 में ब्रिटिश शासन द्वारा इसे छोटा कर केवल 'संयुक्त प्रांत' कहा जाने लगा।"
+            },
+            {
+                q: "'उत्तर प्रदेश' नाम आधिकारिक रूप से किस तिथि को अस्तित्व में आया?",
+                options: ["15 अगस्त 1947", "24 जनवरी 1950", "26 जनवरी 1950", "01 नवम्बर 1956"],
+                ans: 1,
+                exp: "24 जनवरी 1950 को भारत सरकार ने संयुक्त प्रांत का नाम बदलकर 'उत्तर प्रदेश' कर दिया।"
+            },
+            {
+                q: "उत्तर प्रदेश स्थापना दिवस (Foundation Day) मनाने की घोषणा किस वर्ष की गई थी?",
+                options: ["1950", "2017", "2018", "2022"],
+                ans: 1,
+                exp: "2017 में सरकार ने घोषणा की थी कि प्रत्येक वर्ष 24 जनवरी को यूपी दिवस मनाया जाएगा।"
+            },
+            {
+                q: "वर्ष 2018 में जब पहली बार 'उत्तर प्रदेश दिवस' मनाया गया, तब राज्य के राज्यपाल कौन थे?",
+                options: ["आनंदीबेन पटेल", "राम नाईक", "बी.एल. जोशी", "सूरज भान"],
+                ans: 1,
+                exp: "तत्कालीन राज्यपाल राम नाईक के सुझाव पर ही उत्तर प्रदेश दिवस मनाने की शुरुआत 2018 में हुई।"
+            }
+        ];
+
+        // --- APP STATE ---
+        let userName = "";
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let canProceed = false;
+
+        // --- NAVIGATION ---
+        function showScreen(screenId) {
+            document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function startApp() {
+            const input = document.getElementById('username');
+            if (input.value.trim() === "") {
+                alert("Please enter your name!");
+                return;
+            }
+            userName = input.value;
+            showScreen('screen-course');
+        }
+
+        function showSubject() {
+            showScreen('screen-subject');
+        }
+
+        function showLectures() {
+            showScreen('screen-lectures');
+        }
+
+        function startQuiz(lectureNum) {
+            if (lectureNum === 1) {
+                currentQuestionIndex = 0;
+                score = 0;
+                showScreen('screen-quiz');
+                loadQuestion();
+            } else {
+                showScreen('screen-empty');
+            }
+        }
+
+        // --- QUIZ LOGIC ---
+        function loadQuestion() {
+            canProceed = false;
+            const qData = mcqs[currentQuestionIndex];
+            document.getElementById('question-text').innerText = `प्रश्न ${currentQuestionIndex + 1}. ${qData.q}`;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            qData.options.forEach((opt, index) => {
+                const button = document.createElement('button');
+                button.className = 'option';
+                button.innerHTML = `<strong>${String.fromCharCode(65 + index)})</strong> ${opt}`;
+                button.onclick = () => checkAnswer(index, button);
+                optionsContainer.appendChild(button);
+            });
+
+            document.getElementById('explanation').classList.add('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            
+            // Progress bar
+            const progress = ((currentQuestionIndex) / mcqs.length) * 100;
+            document.getElementById('progress-fill').style.width = progress + "%";
+        }
+
+        function checkAnswer(selectedIndex, clickedBtn) {
+            if (canProceed) return; // Prevent double clicking
+
+            const qData = mcqs[currentQuestionIndex];
+            const options = document.querySelectorAll('.option');
+            
+            canProceed = true;
+
+            if (selectedIndex === qData.ans) {
+                clickedBtn.classList.add('correct');
+                score++;
+            } else {
+                clickedBtn.classList.add('incorrect');
+                options[qData.ans].classList.add('correct');
+            }
+
+            // Show explanation
+            const expDiv = document.getElementById('explanation');
+            expDiv.innerHTML = `<strong>Explanation:</strong> ${qData.exp}`;
+            expDiv.classList.remove('hidden');
+
+            // Show next button
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < mcqs.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            showScreen('screen-result');
+            document.getElementById('res-name').innerText = userName;
+            document.getElementById('res-total').innerText = mcqs.length;
+            document.getElementById('res-correct').innerText = score;
+            const percent = Math.round((score / mcqs.length) * 100);
+            document.getElementById('res-score').innerText = percent;
+        }
+    </script>
+</body>
+</html>
